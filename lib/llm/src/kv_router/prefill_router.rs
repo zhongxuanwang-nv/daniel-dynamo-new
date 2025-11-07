@@ -150,11 +150,11 @@ impl PrefillRouter {
         Ok(())
     }
 
-    /// Call the prefill router and extract disaggregated_params
+    /// Call the prefill router and extract disaggregated_params and worker ID
     async fn call_prefill(
         &self,
         request: SingleIn<PreprocessedRequest>,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<(serde_json::Value, Option<u64>)> {
         // Get the prefill router, error if not activated
         let Some(prefill_router) = self.prefill_router.get() else {
             bail!("Prefill router not yet activated");
@@ -165,6 +165,13 @@ impl PrefillRouter {
             InnerPrefillRouter::KvRouter(router) => router.generate(request).await?,
             InnerPrefillRouter::SimpleRouter(router) => router.generate(request).await?,
         };
+
+        // Extract prefill worker ID from response context
+        let prefill_worker_id = prefill_response
+            .context()
+            .get::<u64>("decode_worker_id")
+            .ok()
+            .map(|arc| *arc);
 
         let Some(first_output) = prefill_response.next().await else {
             bail!("Prefill router returned no output (stream ended)");
@@ -184,7 +191,7 @@ impl PrefillRouter {
             bail!("Prefill router output missing disaggregated_params");
         };
 
-        Ok(disaggregated_params)
+        Ok((disaggregated_params, prefill_worker_id))
     }
 }
 
@@ -228,7 +235,7 @@ impl
 
         // Attempt prefill and handle results
         match self.call_prefill(prefill_request).await {
-            Ok(disaggregated_params) => {
+            Ok((disaggregated_params, prefill_worker_id)) => {
                 tracing::debug!("Prefill succeeded, using disaggregated params for decode");
 
                 // Update request with disaggregated_params and router config
@@ -244,8 +251,14 @@ impl
                     ..existing_override.unwrap_or_default()
                 });
 
+                // Store prefill worker ID in context if available
+                let mut decode_context = context;
+                if let Some(worker_id) = prefill_worker_id {
+                    decode_context.insert("prefill_worker_id", worker_id);
+                }
+
                 // Map the modified request through with preserved context
-                let decode_request = context.map(|_| decode_req);
+                let decode_request = decode_context.map(|_| decode_req);
                 next.generate(decode_request).await
             }
             Err(e) => {

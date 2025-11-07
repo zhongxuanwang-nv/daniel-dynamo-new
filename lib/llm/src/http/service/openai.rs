@@ -353,6 +353,12 @@ async fn completions(
             .metrics_clone()
             .create_inflight_guard(&model, Endpoint::Completions, streaming);
 
+    // Extract extra_fields from nvext for response population
+    let extra_fields = request
+        .nvext
+        .as_ref()
+        .and_then(|nv| nv.extra_fields.clone());
+
     // issue the generate call on the engine
     let stream = engine
         .generate(request)
@@ -414,7 +420,7 @@ async fn completions(
             );
         });
 
-        let response = NvCreateCompletionResponse::from_annotated_stream(stream, parsing_options)
+        let mut response = NvCreateCompletionResponse::from_annotated_stream(stream, parsing_options)
             .await
             .map_err(|e| {
                 tracing::error!(
@@ -427,6 +433,11 @@ async fn completions(
                     request_id, e
                 ))
             })?;
+
+        // TODO: Populate nvext worker_id if requested in extra_fields
+        // Worker IDs are tracked in the router layer but need proper context 
+        // propagation to be accessible here
+        let _ = (extra_fields, ctx); // Suppress unused variable warnings
 
         inflight_guard.mark_ok();
         Ok(Json(response).into_response())
@@ -613,6 +624,12 @@ async fn chat_completions(
             .metrics_clone()
             .create_inflight_guard(&model, Endpoint::ChatCompletions, streaming);
 
+    // Extract extra_fields from nvext for response population
+    let extra_fields = request
+        .nvext
+        .as_ref()
+        .and_then(|nv| nv.extra_fields.clone());
+
     // issue the generate call on the engine
     let stream = engine
         .generate(request)
@@ -674,7 +691,7 @@ async fn chat_completions(
             );
         });
 
-        let response =
+        let mut response =
             NvCreateChatCompletionResponse::from_annotated_stream(stream, parsing_options.clone())
                 .await
                 .map_err(|e| {
@@ -688,6 +705,11 @@ async fn chat_completions(
                         e
                     ))
                 })?;
+
+        // TODO: Populate nvext worker_id if requested in extra_fields
+        // Worker IDs are tracked in the router layer but need proper context 
+        // propagation to be accessible here
+        let _ = (extra_fields, ctx); // Suppress unused variable warnings
 
         inflight_guard.mark_ok();
         Ok(Json(response).into_response())

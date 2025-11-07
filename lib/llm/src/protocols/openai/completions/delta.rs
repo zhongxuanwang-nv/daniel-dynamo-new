@@ -191,7 +191,7 @@ impl DeltaGenerator {
             usage: None, // Always None for chunks with content/choices
         };
 
-        NvCreateCompletionResponse { inner }
+        NvCreateCompletionResponse { inner, nvext: None }
     }
 
     /// Creates a final usage-only chunk for OpenAI compliance.
@@ -213,7 +213,7 @@ impl DeltaGenerator {
             usage: Some(usage),
         };
 
-        NvCreateCompletionResponse { inner }
+        NvCreateCompletionResponse { inner, nvext: None }
     }
 
     /// Check if usage tracking is enabled

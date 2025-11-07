@@ -134,7 +134,7 @@ async fn main_loop(
             match (item.data.as_ref(), item.event.as_deref()) {
                 (Some(data), _) => {
                     // Normal case
-                    let entry = data.choices.first();
+                    let entry = data.inner.choices.first();
                     let chat_comp = entry.as_ref().unwrap();
                     if let Some(c) = &chat_comp.delta.content {
                         let _ = stdout.write(c.as_bytes());

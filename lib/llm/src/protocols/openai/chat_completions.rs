@@ -56,7 +56,21 @@ pub struct NvCreateChatCompletionRequest {
 /// # Fields
 /// - `inner`: The base OpenAI unary chat completion response, embedded
 ///   using `serde(flatten)`.
-pub type NvCreateChatCompletionResponse = dynamo_async_openai::types::CreateChatCompletionResponse;
+/// - `nvext`: Optional NVIDIA extension field for response metadata
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NvCreateChatCompletionResponse {
+    #[serde(flatten)]
+    pub inner: dynamo_async_openai::types::CreateChatCompletionResponse,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nvext: Option<super::nvext::NvExtResponse>,
+}
+
+impl From<dynamo_async_openai::types::CreateChatCompletionResponse> for NvCreateChatCompletionResponse {
+    fn from(inner: dynamo_async_openai::types::CreateChatCompletionResponse) -> Self {
+        Self { inner, nvext: None }
+    }
+}
 
 /// A response structure for streamed chat completions, embedding OpenAI's
 /// `CreateChatCompletionStreamResponse`.
@@ -64,8 +78,21 @@ pub type NvCreateChatCompletionResponse = dynamo_async_openai::types::CreateChat
 /// # Fields
 /// - `inner`: The base OpenAI streaming chat completion response, embedded
 ///   using `serde(flatten)`.
-pub type NvCreateChatCompletionStreamResponse =
-    dynamo_async_openai::types::CreateChatCompletionStreamResponse;
+/// - `nvext`: Optional NVIDIA extension field for response metadata
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NvCreateChatCompletionStreamResponse {
+    #[serde(flatten)]
+    pub inner: dynamo_async_openai::types::CreateChatCompletionStreamResponse,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nvext: Option<super::nvext::NvExtResponse>,
+}
+
+impl From<dynamo_async_openai::types::CreateChatCompletionStreamResponse> for NvCreateChatCompletionStreamResponse {
+    fn from(inner: dynamo_async_openai::types::CreateChatCompletionStreamResponse) -> Self {
+        Self { inner, nvext: None }
+    }
+}
 
 /// Implements `NvExtProvider` for `NvCreateChatCompletionRequest`,
 /// providing access to NVIDIA-specific extensions.

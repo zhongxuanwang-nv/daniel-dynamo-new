@@ -47,6 +47,15 @@ pub struct NvCreateCompletionRequest {
 pub struct NvCreateCompletionResponse {
     #[serde(flatten)]
     pub inner: dynamo_async_openai::types::CreateCompletionResponse,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nvext: Option<super::nvext::NvExtResponse>,
+}
+
+impl From<dynamo_async_openai::types::CreateCompletionResponse> for NvCreateCompletionResponse {
+    fn from(inner: dynamo_async_openai::types::CreateCompletionResponse) -> Self {
+        Self { inner, nvext: None }
+    }
 }
 
 impl ContentProvider for dynamo_async_openai::types::Choice {
@@ -255,7 +264,7 @@ impl ResponseFactory {
             system_fingerprint: self.system_fingerprint.clone(),
             usage,
         };
-        NvCreateCompletionResponse { inner }
+        NvCreateCompletionResponse { inner, nvext: None }
     }
 }
 

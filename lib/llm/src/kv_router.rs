@@ -579,9 +579,13 @@ impl AsyncEngine<SingleIn<PreprocessedRequest>, ManyOut<Annotated<LLMEngineOutpu
                     let stream = stream::iter(vec![response, response_tokens]);
                     return Ok(ResponseStream::new(Box::pin(stream), stream_context));
                 }
-                let (mut backend_input, context) = request.into_parts();
+                let (mut backend_input, mut context) = request.into_parts();
                 backend_input.estimated_prefix_hit_num_blocks = Some(overlap_amount);
                 backend_input.dp_rank = Some(dp_rank);
+                
+                // Store the decode worker ID in the context for response generation
+                context.insert("decode_worker_id", instance_id);
+                
                 let updated_request = context.map(|_| backend_input);
 
                 let mut response_stream = self.inner.direct(updated_request, instance_id).await?;

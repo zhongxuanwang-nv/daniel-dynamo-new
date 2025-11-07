@@ -204,6 +204,7 @@ impl TryFrom<NvCreateChatCompletionResponse> for NvResponse {
     fn try_from(nv_resp: NvCreateChatCompletionResponse) -> Result<Self, Self::Error> {
         let chat_resp = nv_resp;
         let content_text = chat_resp
+            .inner
             .choices
             .into_iter()
             .next()
@@ -228,8 +229,8 @@ impl TryFrom<NvCreateChatCompletionResponse> for NvResponse {
         let response = Response {
             id: response_id,
             object: "response".to_string(),
-            created_at: chat_resp.created as u64,
-            model: chat_resp.model,
+            created_at: chat_resp.inner.created as u64,
+            model: chat_resp.inner.model,
             status: Status::Completed,
             output,
             output_text: None,

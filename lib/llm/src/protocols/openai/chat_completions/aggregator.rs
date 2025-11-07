@@ -238,7 +238,7 @@ impl DeltaAggregator {
         choices.sort_by(|a, b| a.index.cmp(&b.index));
 
         // Construct the final response object.
-        let response = NvCreateChatCompletionResponse {
+        let inner = dynamo_async_openai::types::CreateChatCompletionResponse {
             id: aggregator.id,
             created: aggregator.created,
             usage: aggregator.usage,
@@ -247,6 +247,11 @@ impl DeltaAggregator {
             system_fingerprint: aggregator.system_fingerprint,
             choices,
             service_tier: aggregator.service_tier,
+        };
+        
+        let response = NvCreateChatCompletionResponse {
+            inner,
+            nvext: None, // nvext will be populated later if needed
         };
 
         Ok(response)
